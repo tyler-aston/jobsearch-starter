@@ -1,0 +1,52 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+# Local single-user artifacts (the multi-user layout under state/ + out/ supersedes these)
+seen_jobs.json
+deleted_jobs.json
+new_roles.csv
+*.bak
+boards.json.pre_*
+
+# Scratch / one-off analysis scripts and temp data
+count_unresolved.py
+detect_ats.py
+resolve_list4.py
+/tmp/
+
+# LinkedIn harvest is local-only (human-triggered; never in CI -- see HARVEST.md).
+# The boards it produces get committed; the raw harvest + scratch reconcile output don't.
+# in/ is the local harvest staging dir -- ignore it wholesale so newly-named harvest
+# files (e.g. linkedin_harvest_companies_0614.tsv) don't slip into the repo.
+in/
+out/linkedin_harvest.tsv
+out/reconcile_results.csv
+
+# Private working docs not meant for the shared repo
+utah_pm_employers_and_startups_directory.md
+SESSION_PROMPTS.md
+
+# Personal / local-only files (keep out of the repo even though it's private)
+claude.md
+CLAUDE.md
+.claude/
+# tailored-résumé workspace (kept local, like the tailor-application skill)
+Resume/
+out/apply_list*.csv
+out/*_ranked.csv
+out/jd_*.json
+
+# legacy single-user state (watchlist_poller.main smoke test) -- not the pipeline
+new_roles.csv
+seen_jobs.json
+
+# scratch / backups
+out/_*.json
+*.bak
+
+# Email analytics — Gmail creds + cached personal email stay LOCAL ONLY
+.gmail_creds
+out/email_cache/
+out/email_analytics_*.csv
+out/jobsearch_worklist.xlsx

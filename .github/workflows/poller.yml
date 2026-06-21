@@ -1,0 +1,65 @@
+name: job-poller
+
+# Runs your job poller once a day and commits the results back to this repo so the
+# "what's new since yesterday" detection persists across runs. You don't have to touch
+# this file -- it's already wired to your profile (profiles/me.json).
+
+on:
+  schedule:
+    # Time is in UTC and does NOT follow daylight saving. 04:17 UTC is ~10pm Mountain in
+    # summer / ~9pm in winter. Want a different time? Change the two numbers ("minute hour").
+    # Tip: keep it OFF the top of the hour -- :00 is GitHub's busiest slot and those runs
+    # often get delayed or skipped.
+    - cron: "17 4 * * *"
+  workflow_dispatch: {}   # the "Run workflow" button, so you can run it on demand
+
+permissions:
+  contents: write          # needed to commit your new-roles list + state back to the repo
+
+concurrency:
+  group: poller            # never run two pollers at once (avoids clobbering state)
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run the poller
+        env:
+          # OPTIONAL Google Sheet. Add these two secrets (Settings -> Secrets and variables
+          # -> Actions) to also push roles into your Sheet. Names MUST end in _ME. If you
+          # skip them you still get the list at out/me_new_roles.csv -- nothing breaks.
+          WORKLIST_WEBHOOK_URL_ME: ${{ secrets.WORKLIST_WEBHOOK_URL_ME }}
+          WORKLIST_TOKEN_ME: ${{ secrets.WORKLIST_TOKEN_ME }}
+        run: python3 run_profiles.py
+
+      - name: Commit updated results + state
+        run: |
+          git config user.name  "job-poller-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/ out/ || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "poller: update results + state [skip ci]"
+          # Push resiliently in case the repo moved under us; state only touches state/ + out/
+          # so a rebase always applies cleanly. (New GitHub repos default to the "main" branch.)
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            if git push origin HEAD:main; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push rejected on attempt $attempt; retrying."
+            sleep $((attempt * 3))
+          done
+          echo "Failed to push after 5 attempts." >&2
+          exit 1

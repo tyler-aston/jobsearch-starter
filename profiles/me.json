@@ -1,0 +1,15 @@
+{
+  "name": "me",
+  "_help": "Edit the fields below, then commit. Full instructions are in README.md. Copy-paste role recipes for engineering / design / data / marketing live in the README's 'Pick your roles' section.",
+
+  "boards_file": "boards.json",
+  "max_age_days": 7,
+
+  "title_include": null,
+  "title_exclude": null,
+  "workday_search_text": "Product Manager",
+
+  "geo": { "keep_utah": false, "keep_remote_us": true, "keep_onsite_other": false },
+
+  "sheet_env": "ME"
+}
